@@ -102,7 +102,10 @@ func New(name string, store Store) app.HandlerFunc {
 	return func(ctx gcontext.Context, c *app.RequestContext) {
 		req, _ := adaptor.GetCompatRequest(&c.Request)
 		resp := adaptor.GetCompatResponseWriter(&c.Response)
-		s := &session{name, req, store, nil, false, resp}
+		req = req.WithContext(ctx)
+		s := &session{
+			name: name, request: req, store: store, session: nil, written: false, writer: resp,
+		}
 		c.Set(DefaultKey, s)
 		defer context.Clear(req)
 		c.Next(ctx)
@@ -116,7 +119,9 @@ func Many(names []string, store Store) app.HandlerFunc {
 		req, _ := adaptor.GetCompatRequest(&c.Request)
 		resp := adaptor.GetCompatResponseWriter(&c.Response)
 		for _, name := range names {
-			s[name] = &session{name, req, store, nil, false, resp}
+			s[name] = &session{
+				name: name, request: req, store: store, session: nil, written: false, writer: resp,
+			}
 		}
 		c.Set(DefaultKey, s)
 		defer context.Clear(req)
